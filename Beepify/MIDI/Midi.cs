@@ -26,6 +26,10 @@ namespace Beepify.MIDI
         public HeaderChunk Header { get; private set; }
         public TrackChunk[] Chunks { get; private set; }
 
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        /// <param name="path">Path to midi file</param>
         public Midi(string path)
         {
             // Read entire file
@@ -38,6 +42,13 @@ namespace Beepify.MIDI
             Chunks = ParseMTrKChunks(file, 14);
         }
 
+        /// <summary>
+        /// Parses MTrK chunks and returns an array of
+        /// chunks
+        /// </summary>
+        /// <param name="bytes">Where to parse from</param>
+        /// <param name="offset">Where to start parsing</param>
+        /// <returns>Returns an array of chunks</returns>
         private static TrackChunk[] ParseMTrKChunks(byte[] bytes, int offset)
         {
             List<TrackChunk> chunks = new List<TrackChunk>();
@@ -53,12 +64,27 @@ namespace Beepify.MIDI
             return chunks.ToArray();
         }
 
-        static string Pad(uint b, int length = 32)
+        /// <summary>
+        /// Overload method
+        /// </summary>
+        /// <param name="data">Where to find VLV</param>
+        /// <returns>Length</returns>
+        public static uint VariableLength(byte[] data)
         {
-            return Convert.ToString(b, 2).PadLeft(length, '0');
+            int byteLength;
+            return VariableLength(data, out byteLength);
         }
 
-        public static uint VariableLength(byte[] data)
+        /// <summary>
+        /// The MIDI format uses a format called VLV which is the length
+        /// of something given in a variable bytelength. As long as the 
+        /// sign bit is set, the latter bits are added to an integer
+        /// such that foreach byte there will be added 7 bits
+        /// </summary>
+        /// <param name="data">Where to find VLV</param>
+        /// <param name="byteLength">Bytelength of VLV</param>
+        /// <returns>Length</returns>
+        public static uint VariableLength(byte[] data, out int byteLength)
         {
             uint length = 0;
             int i = 0;
@@ -67,15 +93,34 @@ namespace Beepify.MIDI
                 byte toAdd = data[i];
                 length |= (uint)((toAdd & ~(1 << 7)) << (i * 7));
             } while (data[i++] >= 0x80);
+
+            byteLength = i;
             return length;
         }
 
+        /// <summary>
+        /// Gets defined amount of bytes from an array of bytes
+        /// with defined start index and whether it should be
+        /// little or big endian
+        /// </summary>
+        /// <param name="bytes">Where to get bytes from</param>
+        /// <param name="index">Where to start getting</param>
+        /// <param name="amount">Amount of bytes to get</param>
+        /// <param name="msb">Most significant fist</param>
+        /// <returns>Array of bytes</returns>
         public static byte[] GetBytes(byte[] bytes, int index, int amount, bool msb = false)
         {
             byte[] returnBytes = bytes.Skip(index).Take(amount).ToArray();
+            // Reverse if msb
             return msb ? returnBytes.Reverse().ToArray() : returnBytes;
         }
 
+        /// <summary>
+        /// Parse enum string value or throw error
+        /// </summary>
+        /// <typeparam name="T">Enum type</typeparam>
+        /// <param name="value">Value to be parsed</param>
+        /// <returns>Actual enum value</returns>
         public static T ParseEnum<T>(string value)
         {
             // Parse enum type
@@ -90,6 +135,19 @@ namespace Beepify.MIDI
                 // Type was not defined
                 throw new InvalidDataException("Could not parse enum");
             }
+        }
+
+        /// <summary>
+        /// Converts a MIDI note to a frequency
+        /// that can be played with Beep
+        /// *NOTE*: note is rounded to nearest integer
+        /// </summary>
+        /// <param name="note">Note number</param>
+        /// <returns>Frequency in Hz</returns>
+        public static int NoteToFrequency(byte note)
+        {
+            // Credits: http://subsynth.sourceforge.net/midinote2freq.html
+            return (int)Math.Round((440.0 / 32.0) * (Math.Pow(2, ((note - 9) / 12))));
         }
     }
 }

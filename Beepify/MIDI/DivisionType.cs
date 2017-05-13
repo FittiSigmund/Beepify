@@ -12,10 +12,12 @@ namespace Beepify.MIDI
 
         // Division structure:
         //
+        // +-----------+----+----------------+-------------+
         // | Bit:      | 15 |     14...8     |    7...0    |
-        // |-----------|----|----------------|-------------|
+        // +-----------+----+----------------+-------------+
         // | Division: |  0 |    ticks per quarter note    |
         // | Division: |  1 | -frames/second | ticks/frame |
+        // +-----------+----+----------------+-------------+
 
         public DivisionType(ushort input)
         {

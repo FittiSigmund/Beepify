@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using Beepify.MIDI;
+using Beepify.MIDIPlayer;
 
 namespace Beepify
 {
@@ -13,19 +14,10 @@ namespace Beepify
         static void Main(string[] args)
         {
             Midi mid = new Midi("smb.mid");
-            Beep(1000, 100);
+            MidiPlayer player = new MidiPlayer(mid);
+            player.Play();
+
             Console.ReadKey();
-        }
-
-        static void PlayTone(int fqr, int dur)
-        {
-            ThreadStart childref = new ThreadStart(() => Beep(fqr, dur));
-            Thread childThread = new Thread(childref);
-        }
-
-        static void Beep(int frq, int dur)
-        {
-            Console.Beep(frq, dur);
         }
     }
 }

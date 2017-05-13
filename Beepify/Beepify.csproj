@@ -43,11 +43,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MIDIPlayer\MidiPlayer.cs" />
     <Compile Include="MIDI\DivisionType.cs" />
     <Compile Include="MIDI\Events.cs" />
     <Compile Include="MIDI\HeaderChunk.cs" />
     <Compile Include="MIDI\Midi.cs" />
     <Compile Include="MIDI\MidiEvent.cs" />
+    <Compile Include="MIDI\MidiNote.cs" />
     <Compile Include="MIDI\TrackChunk.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

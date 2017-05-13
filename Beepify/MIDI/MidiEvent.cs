@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static Beepify.MIDI.Events;
 using static Beepify.MIDI.Midi;
 
@@ -14,8 +12,10 @@ namespace Beepify.MIDI
         public Meta MetaType { get; private set; }
         public ControllerType ControllerType { get; private set; }
         public Events.Midi MidiType { get; private set; }
+        public byte Channel { get; private set; }
         public uint Size { get; private set; }
         public byte[] EventData { get; private set; }
+        public MidiNote Note { get; private set; }
 
         // A length of -1 means variable
         public static Dictionary<byte, int> MetaLengths = new Dictionary<byte, int>() {
@@ -35,29 +35,69 @@ namespace Beepify.MIDI
             { (byte) Meta.SEQUENCER_SPECIFIC, -1 },
         };
 
-        public MidiEvent(byte[] data)
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        /// <param name="data">Where to get event</param>
+        /// <param name="pntr">Where to start getting</param>
+        public MidiEvent(byte[] data, ref int pntr)
         {
+            // Used whenever we have variable lengths
+            int tempPntr = 0;
 
-
-            switch (data[0])
+            // What is this event
+            switch (data[pntr++])
             {
+                // Meta
                 case 0xFF:
                     EventType = EventTypes.Meta;
-                    MetaType = (Meta)data[1];
+                    MetaType = (Meta)data[pntr++];
                     int tempSize = MetaLengths[(byte)MetaType];
-                    Size = tempSize == -1 ? VariableLength(data.Skip(2).ToArray()) : (uint) tempSize;
+                    Size = tempSize == -1 ? VariableLength(data.Skip(pntr).ToArray(), out tempPntr) : (uint)tempSize;
+                    pntr += tempPntr;
+                    EventData = data.Skip(pntr).Take((int)Size).ToArray();
                     break;
+                // Sysex
                 case 0xF0:
                 case 0xF7:
                     EventType = EventTypes.Sysex;
-                    Size = VariableLength(data.Skip(1).ToArray());
+                    Size = VariableLength(data.Skip(pntr).ToArray(), out tempPntr);
+                    pntr += tempPntr;
+                    EventData = data.Skip(pntr).Take((int)Size).ToArray();
                     break;
+                // Midi or controller
                 default:
+                    //Midi
                     EventType = EventTypes.Midi;
-                    MidiType = (Events.Midi) data[1];
+
+                    if(Enum.IsDefined(typeof(Events.Midi), data[pntr - 1] >> 4))
+                    {
+                        // The first 4 bits determine MIDI type
+                        MidiType = (Events.Midi) (data[pntr - 1] >> 4);
+                        // Last 4 bits select the channel
+                        Channel = (byte)((byte)(data[pntr - 1] << 4) >> 4);
+                        // It is always 2
+                        Size = 2;
+                        // Get the latter 2 bytes
+                        EventData = data.Skip(pntr++).Take((int) Size).ToArray();
+                        // Create note
+                        Note = new MidiNote(EventData[0], EventData[1], Channel, MidiType);
+                    }
+                    //Controller
+                    else if(Enum.IsDefined(typeof(ControllerType), (int)data[pntr - 1]))
+                    {
+                        // We don't handle these yet
+                        Size = 1;
+                    }else
+                    {
+                        // unknown type :p
+                        //throw new NotImplementedException($"{data[pntr - 1].ToString("X")} is not defined");
+                    }
                     break;
             }
 
+            // Set pointer to after EventData
+            pntr += (int) Size;
         }
     }
 }
