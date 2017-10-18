@@ -33,7 +33,7 @@ namespace Beepify.MIDI
 
             // Wierd delta time
             DeltaTime = VariableLength(ChunkData, out pntr);
-            
+            pntr--;
             // Parse all events in chunk
             List<MidiEvent> eventList = new List<MidiEvent>();
             while(pntr < ChunkSize - 1)

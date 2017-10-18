@@ -16,6 +16,7 @@ namespace Beepify.MIDI
         public uint Size { get; private set; }
         public byte[] EventData { get; private set; }
         public MidiNote Note { get; private set; }
+        public int Ticks { get; private set; }
 
         // A length of -1 means variable
         public static Dictionary<byte, int> MetaLengths = new Dictionary<byte, int>() {
@@ -33,6 +34,7 @@ namespace Beepify.MIDI
             { (byte) Meta.TIME_SIGNATURE, 5 },
             { (byte) Meta.KEY_SIGNATURE, 3 },
             { (byte) Meta.SEQUENCER_SPECIFIC, -1 },
+            { (byte) 0x21, 3 },
         };
 
         /// <summary>
@@ -44,7 +46,9 @@ namespace Beepify.MIDI
         {
             // Used whenever we have variable lengths
             int tempPntr = 0;
-
+            Ticks = (int) VariableLength(data.Skip(pntr).ToArray(), out tempPntr);
+            pntr += tempPntr;
+            tempPntr = 0;
             // What is this event
             switch (data[pntr++])
             {
@@ -67,10 +71,19 @@ namespace Beepify.MIDI
                     break;
                 // Midi or controller
                 default:
-                    //Midi
+                    int msb = data[pntr - 1] >> 4;
                     EventType = EventTypes.Midi;
 
-                    if(Enum.IsDefined(typeof(Events.Midi), data[pntr - 1] >> 4))
+                    if(msb == 0x0C || msb == 0x0D)
+                    {
+                        Size = 1;
+                    }
+                    else if(msb == 0x0A || msb == 0x0E || msb == 0x0B)
+                    {
+                        Size = 2;
+                    }
+                    //Midi
+                    else if (Enum.IsDefined(typeof(Events.Midi), msb))
                     {
                         // The first 4 bits determine MIDI type
                         MidiType = (Events.Midi) (data[pntr - 1] >> 4);
@@ -79,19 +92,14 @@ namespace Beepify.MIDI
                         // It is always 2
                         Size = 2;
                         // Get the latter 2 bytes
-                        EventData = data.Skip(pntr++).Take((int) Size).ToArray();
+                        EventData = data.Skip(pntr).Take((int) Size).ToArray();
                         // Create note
-                        Note = new MidiNote(EventData[0], EventData[1], Channel, MidiType);
+                        Note = new MidiNote(EventData[0], EventData[1], Channel, Ticks, MidiType);
                     }
-                    //Controller
-                    else if(Enum.IsDefined(typeof(ControllerType), (int)data[pntr - 1]))
-                    {
-                        // We don't handle these yet
-                        Size = 1;
-                    }else
+                    else
                     {
                         // unknown type :p
-                        //throw new NotImplementedException($"{data[pntr - 1].ToString("X")} is not defined");
+                        throw new NotImplementedException($"{data[pntr - 1].ToString("X")} is not defined");
                     }
                     break;
             }

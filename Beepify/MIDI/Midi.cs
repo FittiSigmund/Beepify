@@ -136,18 +136,5 @@ namespace Beepify.MIDI
                 throw new InvalidDataException("Could not parse enum");
             }
         }
-
-        /// <summary>
-        /// Converts a MIDI note to a frequency
-        /// that can be played with Beep
-        /// *NOTE*: note is rounded to nearest integer
-        /// </summary>
-        /// <param name="note">Note number</param>
-        /// <returns>Frequency in Hz</returns>
-        public static int NoteToFrequency(byte note)
-        {
-            // Credits: http://subsynth.sourceforge.net/midinote2freq.html
-            return (int)Math.Round((440.0 / 32.0) * (Math.Pow(2, ((note - 9) / 12))));
-        }
     }
 }

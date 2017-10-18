@@ -15,6 +15,7 @@ namespace Beepify.MIDI
             MIDI_EVENT_PROGRAM_CHANGE   = 0x0C,
             MIDI_EVENT_CHANNEL_PRESSURE = 0x0D,
             MIDI_EVENT_PITCH_WHEEL      = 0x0E,
+            CUSTOM_EVENT_SKIP_NOTE      = 0x100
         }
 
         // Meta events
@@ -36,7 +37,7 @@ namespace Beepify.MIDI
             KEY_SIGNATURE        = 0x59,
             SEQUENCER_SPECIFIC   = 0x7F
         };
-        
+
         // Control Numbers for 0xBn
         public enum ControllerType
         {

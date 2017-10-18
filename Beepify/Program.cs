@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Beepify.MIDI;
 using Beepify.MIDIPlayer;
+using System.IO;
 
 namespace Beepify
 {
@@ -15,9 +16,12 @@ namespace Beepify
         {
             Midi mid = new Midi("smb.mid");
             MidiPlayer player = new MidiPlayer(mid);
-            player.Play();
+            //player.Play();
+
+            
 
             Console.ReadKey();
         }
+
     }
 }
